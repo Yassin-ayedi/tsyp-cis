@@ -1,0 +1,148 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1500 840" width="1500" height="840" font-family="Segoe UI, system-ui, -apple-system, sans-serif">
+  <defs>
+    <marker id="arr" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#52514e"/>
+    </marker>
+    <marker id="arrRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#b3261e"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#c9c8c2;stroke-width:1.5}
+      .l1{fill:#eef4fc;stroke:#2a78d6;stroke-width:2}
+      .l2{fill:#fdf1eb;stroke:#eb6834;stroke-width:2}
+      .chip{fill:#ffffff;stroke:#c9c8c2;stroke-width:1.2}
+      .t{fill:#0b0b0b;font-size:16px}
+      .tb{fill:#0b0b0b;font-size:17px;font-weight:700}
+      .s{fill:#52514e;font-size:13px}
+      .code{fill:#52514e;font-size:12.5px;font-family:Consolas, monospace}
+      .atk{fill:#b3261e;font-size:13px;font-weight:600}
+      .line{stroke:#52514e;stroke-width:1.8;fill:none}
+      .bnd{stroke:#8a8983;stroke-width:1.5;stroke-dasharray:6 5}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="1500" height="840" fill="#fcfcfb"/>
+  <text x="40" y="38" class="tb" font-size="22">Trust the Pixel: two-layer defence for Earth-observation imagery</text>
+
+  <!-- Sender side -->
+  <text x="40" y="78" class="s" font-weight="700">SENDER SIDE (emulated in src/pipeline/sender.py)</text>
+  <rect x="40" y="92" width="230" height="96" rx="10" class="box"/>
+  <text x="155" y="130" text-anchor="middle" class="tb">Sensor + processing</text>
+  <text x="155" y="154" text-anchor="middle" class="s">Sentinel-2 product</text>
+  <text x="155" y="172" text-anchor="middle" class="s">(EuroSAT RGB tiles here)</text>
+
+  <line x1="300" y1="80" x2="300" y2="236" class="bnd"/>
+  <text x="306" y="232" class="s">B1: before signing</text>
+
+  <rect x="330" y="92" width="400" height="96" rx="10" class="box"/>
+  <text x="530" y="122" text-anchor="middle" class="tb">Sender signs (trust anchor)</text>
+  <text x="530" y="146" text-anchor="middle" class="s">manifest = SHA-256 of image + time, sensor, place, key_id, nonce</text>
+  <text x="530" y="166" text-anchor="middle" class="s">Ed25519 signature over a canonical, domain-separated manifest</text>
+  <text x="530" y="182" text-anchor="middle" class="code">software key (HSM/TPM in deployment)</text>
+
+  <line x1="760" y1="80" x2="760" y2="236" class="bnd"/>
+  <text x="766" y="232" class="s">B2: after signing</text>
+
+  <rect x="790" y="92" width="300" height="96" rx="10" class="box"/>
+  <text x="940" y="126" text-anchor="middle" class="tb">Transfer</text>
+  <text x="940" y="150" text-anchor="middle" class="s">network, storage, mirrors</text>
+  <text x="940" y="172" text-anchor="middle" class="code">image + manifest.json + .sig</text>
+
+  <line x1="270" y1="140" x2="326" y2="140" class="line" marker-end="url(#arr)"/>
+  <line x1="730" y1="140" x2="786" y2="140" class="line" marker-end="url(#arr)"/>
+
+  <!-- Attackers -->
+  <rect x="1120" y="92" width="340" height="140" rx="10" fill="#fdf0ef" stroke="#e3a29e"/>
+  <text x="1136" y="116" class="atk">Adversaries (docs/threat_model.md)</text>
+  <text x="1136" y="140" class="s"><tspan class="atk">A1</tspan> edits or swaps data in transit</text>
+  <text x="1136" y="160" class="s"><tspan class="atk">A2</tspan> replays a genuine image</text>
+  <text x="1136" y="180" class="s"><tspan class="atk">A3</tspan> edits pixels before signing (insider)</text>
+  <text x="1136" y="200" class="s"><tspan class="atk">A5</tspan> launders edits to evade the detector</text>
+  <text x="1136" y="220" class="s"><tspan class="atk">A6</tspan> malformed files, decompression bombs</text>
+  <text x="155" y="212" text-anchor="middle" class="atk">A3 acts here</text>
+  <text x="952" y="214" class="atk">A1, A2 act here</text>
+
+  <!-- Receiver -->
+  <path d="M940,188 L940,262" class="line" marker-end="url(#arr)"/>
+  <rect x="40" y="266" width="1420" height="550" rx="14" fill="#f4f3ef" stroke="#c9c8c2" stroke-width="1.5"/>
+  <text x="60" y="294" class="s" font-weight="700">RECEIVER, laptop CPU (src/pipeline/analyze.py)</text>
+
+  <!-- Layer 1 -->
+  <rect x="60" y="310" width="640" height="232" rx="12" class="l1"/>
+  <text x="80" y="340" class="tb">Layer 1 · Provenance and integrity</text>
+  <text x="80" y="360" class="code">src/security/security_assessment.py · 22 checks, fixed order</text>
+  <rect x="80" y="378" width="138" height="62" rx="8" class="chip"/>
+  <text x="149" y="404" text-anchor="middle" class="t">1 Format</text>
+  <text x="149" y="424" text-anchor="middle" class="s">magic, size, bomb</text>
+  <rect x="234" y="378" width="148" height="62" rx="8" class="chip"/>
+  <text x="308" y="404" text-anchor="middle" class="t">2 Signature</text>
+  <text x="308" y="424" text-anchor="middle" class="s">key, verify, hash</text>
+  <rect x="398" y="378" width="138" height="62" rx="8" class="chip"/>
+  <text x="467" y="404" text-anchor="middle" class="t">3 Metadata</text>
+  <text x="467" y="424" text-anchor="middle" class="s">time, place, sensor</text>
+  <rect x="552" y="378" width="132" height="62" rx="8" class="chip"/>
+  <text x="618" y="404" text-anchor="middle" class="t">4 Replay</text>
+  <text x="618" y="424" text-anchor="middle" class="s">ID and content</text>
+  <line x1="218" y1="409" x2="232" y2="409" class="line" marker-end="url(#arr)"/>
+  <line x1="382" y1="409" x2="396" y2="409" class="line" marker-end="url(#arr)"/>
+  <line x1="536" y1="409" x2="550" y2="409" class="line" marker-end="url(#arr)"/>
+  <text x="80" y="470" class="code">trusted_keys.json (public keys only) · policy.json · ledger.json · reference time</text>
+  <text x="80" y="496" class="t">Status: <tspan font-weight="700">PASSED</tspan> · <tspan font-weight="700">REVIEW</tspan> (metadata only) · <tspan font-weight="700" fill="#b3261e">FAILED</tspan></text>
+  <text x="80" y="520" class="s">Catches A1, A2, A6 and forged or revoked keys. Blind to A3.</text>
+
+  <!-- Rejected -->
+  <path d="M200,542 L200,600" stroke="#b3261e" stroke-width="1.8" fill="none" marker-end="url(#arrRed)"/>
+  <text x="210" y="578" class="atk">FAILED</text>
+  <rect x="60" y="604" width="330" height="78" rx="10" fill="#fdf0ef" stroke="#b3261e" stroke-width="1.8"/>
+  <text x="225" y="636" text-anchor="middle" class="tb" fill="#b3261e">REJECTED</text>
+  <text x="225" y="660" text-anchor="middle" class="s">fail closed: never shown to models or analysts</text>
+
+  <!-- Layer 2 -->
+  <path d="M700,426 L756,426" class="line" marker-end="url(#arr)"/>
+  <text x="704" y="416" class="s">PASSED /</text>
+  <text x="704" y="448" class="s">REVIEW</text>
+  <rect x="760" y="310" width="680" height="232" rx="12" class="l2"/>
+  <text x="780" y="340" class="tb">Layer 2 · Pixel forensics</text>
+  <text x="780" y="360" class="code">src/forensics/signals.py · src/models/forensic_unet.py</text>
+  <rect x="780" y="378" width="98" height="62" rx="8" class="chip"/>
+  <text x="829" y="404" text-anchor="middle" class="t">RGB</text>
+  <text x="829" y="424" text-anchor="middle" class="s">3 channels</text>
+  <rect x="888" y="378" width="120" height="62" rx="8" class="chip"/>
+  <text x="948" y="404" text-anchor="middle" class="t">SRM ×3</text>
+  <text x="948" y="424" text-anchor="middle" class="s">noise residuals</text>
+  <rect x="1018" y="378" width="98" height="62" rx="8" class="chip"/>
+  <text x="1067" y="404" text-anchor="middle" class="t">ELA</text>
+  <text x="1067" y="424" text-anchor="middle" class="s">JPEG q90</text>
+  <line x1="1116" y1="409" x2="1140" y2="409" class="line" marker-end="url(#arr)"/>
+  <rect x="1144" y="372" width="276" height="76" rx="8" class="chip" stroke="#eb6834" stroke-width="1.8"/>
+  <text x="1282" y="398" text-anchor="middle" class="tb">ForensicUNet</text>
+  <text x="1282" y="418" text-anchor="middle" class="s">7 channels, 64×64 tiles, 1.09 M params</text>
+  <text x="1282" y="436" text-anchor="middle" class="s">4.3 MB, CPU only</text>
+  <text x="780" y="474" class="t"><tspan font-weight="700">Image score</tspan> = max over tiles · <tspan font-weight="700">pixel mask</tspan> = where it looks edited</text>
+  <text x="780" y="498" class="s">Threshold fixed on validation data only (far5: ≤ 5% false alarms on clean + laundered images)</text>
+  <text x="780" y="520" class="s">The only control against A3; robust training against A5.</text>
+
+  <!-- Verdict -->
+  <path d="M1100,542 L1100,600" class="line" marker-end="url(#arr)"/>
+  <rect x="440" y="604" width="1000" height="78" rx="10" class="box"/>
+  <text x="460" y="634" class="tb">Verdict</text>
+  <rect x="460" y="646" width="150" height="26" rx="13" fill="#fdf0ef" stroke="#b3261e"/>
+  <text x="535" y="664" text-anchor="middle" class="s" fill="#b3261e" font-weight="700">REJECTED</text>
+  <rect x="622" y="646" width="230" height="26" rx="13" fill="#fdf6e8" stroke="#a35c00"/>
+  <text x="737" y="664" text-anchor="middle" class="s" fill="#a35c00" font-weight="700">REVIEW (metadata issue)</text>
+  <rect x="864" y="646" width="260" height="26" rx="13" fill="#f6eefb" stroke="#7a1fa3"/>
+  <text x="994" y="664" text-anchor="middle" class="s" fill="#7a1fa3" font-weight="700">SUSPECTED (score ≥ threshold)</text>
+  <rect x="1136" y="646" width="180" height="26" rx="13" fill="#ecf6f0" stroke="#1f7a4d"/>
+  <text x="1226" y="664" text-anchor="middle" class="s" fill="#1f7a4d" font-weight="700">NOT_DETECTED</text>
+  <path d="M390,643 L436,643" stroke="#b3261e" stroke-width="1.8" fill="none" marker-end="url(#arrRed)"/>
+
+  <!-- Report -->
+  <path d="M940,682 L940,716" class="line" marker-end="url(#arr)"/>
+  <rect x="440" y="720" width="1000" height="78" rx="10" class="box"/>
+  <text x="460" y="750" class="tb">Forensic report → analyst</text>
+  <text x="460" y="774" class="s">JSON + HTML: verdict, score, threshold, mask, all 22 checks with evidence (hash, key, policy version), timings.</text>
+  <text x="460" y="792" class="s">Replay ledger: record_accepted() adds an image only after PASSED.</text>
+  <text x="60" y="730" class="s" font-weight="700">Measured on a laptop CPU</text>
+  <text x="60" y="752" class="s">31 ms per image (cached), 83 ms first open</text>
+  <text x="60" y="772" class="s">590 MB peak memory, no GPU, no purchase</text>
+  <text x="60" y="792" class="code">src/pipeline/benchmark.py</text>
+</svg>

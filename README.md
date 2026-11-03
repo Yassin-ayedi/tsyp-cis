@@ -7,7 +7,9 @@ Two independent layers work together:
 1. **Provenance (layer 1).** The sender signs a manifest that holds the image's SHA-256 hash and its metadata (Ed25519). The receiver runs 22 checks in a fixed order: format, signature and hash, metadata plausibility, replay. Anything that fails is rejected before a model or an analyst sees it.
 2. **Pixel forensics (layer 2).** A signature cannot see an edit made *before* signing, for example by an insider or a compromised processing chain. A small U-Net (ForensicUNet) looks at the pixels themselves, through RGB, SRM noise residuals and Error Level Analysis. It returns an image score and a mask of where the image looks edited.
 
-![Architecture](docs/figures/architecture.png)
+![Architecture](docs/figures/architecture_sketch.png)
+
+A detailed version with the file behind each step is in [docs/figures/architecture.png](docs/figures/architecture.png).
 
 ## Results at a glance
 
@@ -20,7 +22,7 @@ Real Sentinel-2 tiles from EuroSAT RGB, synthetic edits with exact masks, 5,000 
 | Latency | 31 ms per 64×64 image end to end on a laptop CPU (32 images/s); 83 ms when files are read from disk for the first time |
 | Memory | 590 MB peak for the whole process; model file 4.3 MB (1.09 M parameters) |
 | Security overhead | Layer 1 takes 21 ms of the 31 ms (68%) on these small tiles |
-| Provenance tests | Our 13 attack scenes: 13/13 on simulated images, 13/13 on real EuroSAT tiles; 35/35 edge cases, 5/5 invariants |
+| Provenance tests | 53/53 on real EuroSAT tiles: our 13 attack scenes, 35 edge cases, 5 invariants; 17/17 injected bugs caught |
 | Evasion (laundering) | Robust model with the far5 threshold detects 40–57% of edits after JPEG, resampling, noise or blur, with 1–16% false alarms |
 
 Hardware cost: none. Everything runs on a CPU; no GPU or hardware trust anchor is needed.
@@ -58,9 +60,11 @@ python -m src.pipeline.analyze --image <image> --manifest <image_id>.manifest.js
 Run the provenance test suites (from `src/security/`):
 
 ```bash
-python run_security_cases.py                                                       # 13 scenes + 35 edge cases + 5 invariants
-python run_security_cases.py --data-dir test_data_eurosat --results-dir test_results/eurosat   # 13 scenes on real EuroSAT tiles
+python run_security_cases.py          # 13 attack scenes + 35 edge cases + 5 invariants, on real EuroSAT tiles
+python tools/mutation_check.py         # optional: 17 copies of the module with one bug each must all be caught
 ```
+
+The test cases in `src/security/test_data/` are already built. To rebuild them from EuroSAT, run `python -m src.security.generate_eurosat_scenes` from the repository root.
 
 ## The demo
 

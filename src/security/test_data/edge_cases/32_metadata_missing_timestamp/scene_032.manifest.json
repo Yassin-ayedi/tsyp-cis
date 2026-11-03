@@ -2,8 +2,8 @@
   "manifest_version": 1,
   "image_id": "scene_032",
   "file_name": "scene_032.png",
-  "sha256": "7598e964983620f0e0d888b109b3c26fe30fc7c6351bcbeec94ee520319d13c9",
-  "size_bytes": 12166,
+  "sha256": "8ce355069da62fe0f322f182163b350abd155a508fb10213264aaf10a7012fa4",
+  "size_bytes": 9764,
   "metadata": {
     "sensor_id": "SAT-ALPHA-01",
     "latitude": 36.8,

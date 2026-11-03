@@ -1,6 +1,6 @@
 # TSYP14 Track 3: Security Assessment module
 
-This is the **Security Assessment** stage of the *Trust the Pixel* pipeline. It decides whether an incoming satellite image can be trusted **before** the AI image-forensics models see it. The implementation follows the *TSYP14 Security Assessment teammate guide*, the specification of this layer that our team wrote before the code (kept outside the repository). Its 13 scenes and answer keys are our own test scenario, not an organiser dataset. The signed-manifest scheme is a design choice of this guide; it is not stated as a requirement in the official challenge instructions. Where the guide was silent, the choices made are listed in the [ambiguities](#documented-ambiguities-and-implementation-choices) section below.
+This is the **Security Assessment** stage of the *Trust the Pixel* pipeline. It decides whether an incoming satellite image can be trusted **before** the AI image-forensics models see it. The implementation follows our layer 1 specification, the *TSYP14 Security Assessment* guide, written before the code (kept outside the repository). Its 13 scenes and answer keys are our own test scenario, not an organiser dataset. The signed-manifest scheme is a design choice of this guide; it is not stated as a requirement in the official challenge instructions. Where the guide was silent, the choices made are listed in the [ambiguities](#documented-ambiguities-and-implementation-choices) section below.
 
 ```
 image file ──► 1. Format ──► 2. Signature & integrity ──► 3. Metadata ──► 4. Replay ──► decision
@@ -41,14 +41,13 @@ src/security/
 ├── __init__.py
 ├── security_assessment.py    production module (public keys only, no test knowledge)
 ├── adapter.py                assess() result -> shared ValidationReport contract
-├── generate_test_dataset.py  builds test_data/ (disposable test keys live only here)
-├── generate_eurosat_scenes.py  builds test_data_eurosat/: the 13 guide scenes on real EuroSAT tiles
+├── generate_test_dataset.py  case definitions and disposable test keys; alone, builds test_data/ on synthetic pictures
+├── generate_eurosat_scenes.py  builds test_data/ with the same cases on real EuroSAT tiles (the committed version)
 ├── run_security_cases.py     independent test runner, writes test_results/
 ├── tools/mutation_check.py   optional: checks that the tests catch injected bugs
 ├── web/                      beginner guide page: index.html, style.css, script.js
-├── test_data/                generated; safe to delete and regenerate
-├── test_data_eurosat/        generated; needs EuroSAT RGB in data/raw/ to regenerate
-└── test_results/             reports of the test runs: results.json, results.csv, eurosat/
+├── test_data/                generated: 13 scenes + 35 edge cases on real EuroSAT tiles
+└── test_results/             reports of the latest test run: results.json, results.csv
 ```
 
 The runner was renamed from `test_security_assessment.py` to `run_security_cases.py` so that pytest does not collect it as a test module; `tests/test_security.py` calls it instead. The architecture diagram is in `docs/figures/architecture.png`.
@@ -68,7 +67,6 @@ This module now lives in `src/security/` of the shared repository and uses the r
 ```powershell
 .\.venv312\Scripts\Activate.ps1
 cd src\security
-python generate_test_dataset.py          # optional: regenerates test_data/
 python run_security_cases.py             # 53 checks, writes test_results/
 python tools\mutation_check.py           # optional: 17 injected bugs must be caught
 python security_assessment.py --image test_data\scenes\01_clean_pass\scene_001.png --manifest test_data\scenes\01_clean_pass\scene_001.manifest.json
@@ -78,11 +76,7 @@ From the repository root, `python -m pytest -q` also runs this suite (`tests/tes
 
 The CLI prints the full result as JSON and exits with **0** for PASSED, **2** for REVIEW, **3** for FAILED, or **1** for a configuration error. `--sig` defaults to `<manifest>.sig`. `--config-dir` defaults to `test_data`. `--record` appends a PASSED image to that folder's ledger.
 
-**The 13 scenes on real satellite images.** From the repository root, `python -m src.security.generate_eurosat_scenes` rebuilds `test_data_eurosat/` from `data/raw/eurosat/EuroSAT_RGB/`. Then, from this folder:
-
-```powershell
-python run_security_cases.py --data-dir test_data_eurosat --results-dir test_results\eurosat
-```
+**Regenerating `test_data/`.** From the repository root, `python -m src.security.generate_eurosat_scenes` rebuilds it on real tiles from `data/raw/eurosat/EuroSAT_RGB/`. Without EuroSAT, `python generate_test_dataset.py` (from this folder) rebuilds the same cases and answer keys on synthetic pictures.
 
 **Running against the guide's `sample_input/` folder:** the runner also understands the layout where scene folders sit directly under `sample_input/` without `case.json`.
 
@@ -193,9 +187,9 @@ These points are not fully specified by the guide. Each one is a deliberate, tes
 15. **`META_FILENAME`** compares exactly and case-sensitively against the base name of the received file.
 16. **Configuration errors raise.** Malformed policy, trust store, ledger or reference time raises `ConfigurationError`. A trust-store entry with any `private*` field is refused.
 
-## Synthetic dataset
+## Test dataset
 
-`generate_test_dataset.py` writes all of `test_data/`. It deliberately **does not import** the production module. Its own `canonical_signing_bytes()` is pinned against a hard-coded byte string, so a serialisation bug in one implementation cannot hide in the other.
+`generate_test_dataset.py` defines every case of `test_data/` (scenes, edge cases, keys, policy, ledger and answer keys). `generate_eurosat_scenes.py` runs it with real EuroSAT pictures; that is the committed version. The generator deliberately **does not import** the production module. Its own `canonical_signing_bytes()` is pinned against a hard-coded byte string, so a serialisation bug in one implementation cannot hide in the other.
 
 **Keys are disposable test keys.** Each one is derived from a public label, for example `sha256("TSYP14-DISPOSABLE-TEST-KEY:sat-alpha-2026a")`, as the guide's `make_samples.py` does. Anyone can recompute them. They are never written to disk and must never be used for anything real.
 
@@ -207,7 +201,14 @@ These points are not fully specified by the guide. Each one is a deliberate, tes
 
 It also has two extra active keys for the `KEY_NOT_VALID` tests: `sat-charlie-2024`, which has expired, and `sat-delta-2027`, which is not yet valid. `sat-rogue-99` and `attacker` are not in it.
 
-**Images** are 256×256 blurred fields with a road and a river, made with Pillow. Their sizes and hashes differ from the official samples.
+**Images** are real Sentinel-2 tiles from EuroSAT RGB: 41 tiles covering all 10 land-cover classes, one per generator seed (`sources.json` lists them).
+
+* Each 64×64 tile is enlarged ×4 by pixel repetition to the guide's 256×256, so that scene 03's tamper rectangle (pixels 100-140) lands on the image. No pixel value is invented: every value comes from the tile.
+* Cases that are deliberately not pictures stay as they are: an empty file, a text file renamed `.png`, random bytes after a PNG signature, a 100000×100000 "bomb" header and a 7000×6000 bilevel PNG.
+* The manifest metadata (sensor, place, time) is the guide's, not the tile's real acquisition: EuroSAT RGB carries no georeference.
+* Without EuroSAT, `generate_test_dataset.py` alone produces the same cases on synthetic pictures (blurred fields with a road and a river).
+
+![Six of the real-tile scenes](../../docs/figures/security_eurosat_scenes.png)
 
 **The 13 guide scenes** reproduce the setups and expected results of guide §7: same keys, sensors, ages, coordinates, tampering steps and ledger relations. The ledger holds `scene_000` (the hash of the text "previously accepted image") and `scene_099` (the picture that scene 09 reuses).
 
@@ -241,16 +242,6 @@ It also has two extra active keys for the `KEY_NOT_VALID` tests: `sat-charlie-20
 
 The full table, with expected flags and codes, is in `test_data/CASES.md`.
 
-## Real-image scenes (`test_data_eurosat/`)
-
-The synthetic pictures above prove the checks, not that they work on satellite data. `generate_eurosat_scenes.py` rebuilds the same 13 guide scenes (same keys, policy, ledger, tampering steps and expected results) with **real Sentinel-2 tiles from EuroSAT RGB**: 12 tiles covering all 10 land-cover classes. It reuses `generate_test_dataset.py` unchanged and only swaps the picture source.
-
-* Each 64×64 tile is enlarged ×4 by pixel repetition to the guide's 256×256, so that scene 03's tamper rectangle (pixels 100-140) lands on the image. No pixel value is invented: every value comes from the tile.
-* The manifest metadata (sensor, place, time) is the guide's, not the tile's real acquisition: EuroSAT RGB carries no georeference.
-* `sources.json` and `CASES.md` list the tile behind each scene.
-
-![Six of the real-tile scenes](../../docs/figures/security_eurosat_scenes.png)
-
 ## Test runner
 
 `run_security_cases.py` calls `assess()` for every case. For each one it compares:
@@ -281,17 +272,17 @@ It writes `test_results/results.json` and `results.csv`, and exits non-zero on a
 
 ## Results (this environment)
 
-* `run_security_cases.py`: **53/53 passed (100%)**. That is 13/13 guide scenes, 35/35 edge cases and 5/5 invariants.
+* `run_security_cases.py` on `test_data/` (real EuroSAT tiles): **53/53 passed (100%)**. That is 13/13 guide scenes, 35/35 edge cases and 5/5 invariants.
+* An independent script compared image ID, the four flags (with strict types), status and ordered reason codes with every `expected.json`: **48/48 match**.
 * `tools/mutation_check.py`: **17/17 mutants killed**.
-* The 13 scenes on real EuroSAT tiles (`test_data_eurosat/`): **13/13 plus 5/5 invariants** (`test_results/eurosat/`).
-* The guide's own `sample_input/` (13 scenes generated by the guide's `make_samples.py`, simulated images and demo keys): **13/13 plus 5/5 invariants**. An independent script also compared image ID, the four flags, status and ordered reason codes with every `expected.json`: all 13 match.
+* The guide's own `sample_input/` (13 scenes generated by the guide's `make_samples.py`, synthetic pictures and demo keys): **13/13 plus 5/5 invariants**.
 
-All of these images and keys are simulated or emulated: no public satellite product ships with a signed manifest, so the signing side is always emulated, as the challenge allows.
+The keys are demo keys: no public satellite product ships with a signed manifest, so the signing side is always emulated, as the challenge allows.
 
 ## The guide's self-check questions
 
 1. **Why compare hashes when the signature is valid?** The signature covers only the manifest. Swapping the image file leaves the manifest and signature intact (scene 03), so only the hash comparison links the bytes to what was signed.
 2. **Why is bad metadata REVIEW but a bad signature FAILED?** A bad signature means the origin is unproven, so nothing can be trusted. Bad metadata from a proven, trusted sender may be an honest mistake and needs a human look.
 3. **Why does the receiver need no key pair?** It only *verifies*. Verification needs the sender's public key, and the receiver signs nothing and decrypts nothing.
-4. **Why check key status before verifying?** A revoked key's signatures are still mathematically valid. Checking first ensures that a compromised key can never pass, and it avoids treating "math OK" as "trusted".
+4. **Why check key status before verifying?** A revoked key's signatures are still mathematically valid. Checking first ensures that a compromised key can never pass, and a mathematically valid signature is never mistaken for a trusted one.
 5. **Why add to the ledger only after PASSED?** Recording rejected images would let an attacker send garbage under legitimate IDs or hashes and "burn" them, blocking the genuine image later.

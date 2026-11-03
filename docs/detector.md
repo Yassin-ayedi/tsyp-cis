@@ -25,6 +25,8 @@ A light encoder-decoder (U-Net, Ronneberger et al. 2015) with 1,085,932 paramete
 
 It is trained and runs on a CPU. Images of any size are cut into 64×64 tiles (`src/pipeline/analyze.py`): the image score is the **maximum** over tiles, and the mask is the average of the overlapping tile masks. Outputs follow the shared contracts D and E (`src/utils/contracts.py`). Without a validated threshold, no decision is returned, only scores. The report page draws the flagged regions only when the image score reaches the threshold, so it never shows red areas on an image it judged clean; the JSON report keeps the raw mask.
 
+![Layer 2, from a tile to a verdict](figures/fig_layer2.png)
+
 **Why not a classification network such as EfficientNet or ResNet?** Networks pretrained on ImageNet describe *what* is in an image; manipulation shows up in noise and compression statistics that they discard. They also give a single label, not a mask. An earlier baseline of this kind (frozen EfficientNet-B0 with two heads, `src/models/train_eurosat.py`) is kept in the repository for comparison but is not part of the pipeline.
 
 ## Data and protocol
@@ -37,6 +39,8 @@ It is trained and runs on a CPU. Images of any size are cut into 64×64 tiles (`
   * `far5` (deployed model, `evaluate_evasion --calibration far5`): the lowest threshold that keeps false alarms at or below 5 % on validation images, clean and randomly laundered. It is saved with the weights in `outputs/forensic_unet_robust_far5.pt`.
 * The checkpoint kept is the epoch with the best validation AUC + IoU (out of 30).
 * Seeds are fixed. Every run writes its full results, including the training history, to `outputs/*.json`.
+
+![How the dataset is built](figures/fig_dataset_pipeline.png)
 
 ![Edits, true masks and the deployed model's masks](figures/tamper_examples.png)
 

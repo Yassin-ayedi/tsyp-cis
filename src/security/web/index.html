@@ -60,7 +60,7 @@
         <div><b>35/35</b><span>edge cases</span></div>
         <div><b>5/5</b><span>safety checks</span></div>
       </div>
-      <p class="fine">Snapshot from <code>test_results/results.json</code>, run on 18 Oct 2026 (Windows, Python 3.14.5), synthetic test data only. Re-run the tests to refresh — see <a href="#run">How to run</a>.</p>
+      <p class="fine">Snapshot from <code>test_results/results.json</code>, first run on 18 Oct 2026 (Windows, Python 3.14.5) on synthetic pictures; the same 53 checks pass on the real-tile test data (3 Nov 2026, Python 3.13.5). Re-run the tests to refresh — see <a href="#run">How to run</a>.</p>
     </aside>
   </div>
 </header>
@@ -315,6 +315,7 @@
         <tbody>
           <tr><td><code>security_assessment.py</code></td><td><strong>The checker.</strong> Contains <code>assess()</code>, which runs all the checks on one image and returns the verdict, plus helper functions to load the configuration files and to add a PASSED image to the ledger. It can also be used from the command line on a single image. It only uses public keys and never reads test answers.</td></tr>
           <tr><td><code>generate_test_dataset.py</code></td><td><strong>The test-data factory.</strong> Draws small synthetic “satellite-like” pictures (fields, a road, a river), writes manifests, signs them with throw-away test keys and records the expected answer for each case. The test keys are derived from public labels, are never saved to disk, and must never be used for anything real. Running it twice gives identical files.</td></tr>
+          <tr><td><code>generate_eurosat_scenes.py</code></td><td><strong>The same factory with real pictures.</strong> Runs the factory above but takes each picture from a real EuroSAT (Sentinel-2) tile. This is the version stored in <code>test_data</code>.</td></tr>
           <tr><td><code>run_security_cases.py</code></td><td><strong>The examiner.</strong> Runs the checker on every test case, compares its answer field by field with <code>expected.json</code>, runs 5 extra safety checks, prints PASS/FAIL with explanations, and writes the reports.</td></tr>
           <tr><td><code>tools/mutation_check.py</code></td><td><strong>Optional quality check of the tests themselves.</strong> Makes 17 temporary copies of the checker, each with one deliberate bug (for example ignoring revoked keys), and confirms the tests catch every one. Your real files are never modified.</td></tr>
           <tr><td><code>requirements.txt</code></td><td>The two Python libraries needed: <code>cryptography</code> (Ed25519 signatures) and <code>Pillow</code> (reading images).</td></tr>
@@ -408,9 +409,9 @@ Reports: test_results\results.json, test_results\results.csv</pre></div>
         <div class="cmd"><pre><code>python tools\mutation_check.py</code></pre></div>
         <p>It should end with <code>17/17 mutants killed; survivors: none</code>.</p>
       </div></details>
-      <details><summary>Run the tests on real satellite tiles and on the guide's sample data</summary><div class="details-body">
-        <p>The same 13 scenes rebuilt on real EuroSAT (Sentinel-2) tiles, 13/13 plus 5/5 invariants:</p>
-        <div class="cmd"><pre><code>python run_security_cases.py --data-dir test_data_eurosat --results-dir test_results\eurosat</code></pre></div>
+      <details><summary>Rebuild the test data, or run the guide's sample data</summary><div class="details-body">
+        <p>The test images in <code>test_data</code> are real EuroSAT (Sentinel-2) tiles. To rebuild them, run this from the repository root (it needs EuroSAT in <code>data/raw/eurosat/EuroSAT_RGB</code>):</p>
+        <div class="cmd"><pre><code>python -m src.security.generate_eurosat_scenes</code></pre></div>
         <p>The guide's own <code>sample_input</code> folder (placed next to the project folder) also passes 13/13 plus 5/5:</p>
         <div class="cmd"><pre><code>python run_security_cases.py --data-dir ..\sample_input --results-dir test_results\sample_input</code></pre></div>
       </div></details>
@@ -575,7 +576,7 @@ Reports: test_results\results.json, test_results\results.csv</pre></div>
         <h3>Current limitations</h3>
         <ul class="limit-list">
           <li><strong>No visual manipulation detection.</strong> An image edited <em>before</em> a trusted operator signed it, or signed with a stolen key, will pass. The checks prove origin and integrity, not that the picture shows reality.</li>
-          <li><strong>Mostly synthetic test data.</strong> Most test images are simple generated 256×256 pictures; the 13 guide scenes are also run on real EuroSAT tiles (<code>test_data_eurosat</code>). Signing is always emulated with demo keys, because no public satellite product ships with a signed manifest.</li>
+          <li><strong>Real tiles, emulated signing.</strong> Every test picture is a real EuroSAT tile (enlarged ×4), except files that are deliberately broken. The manifest metadata is invented, and signing is always emulated with demo keys, because no public satellite product ships with a signed manifest.</li>
                     <li><strong>Demo keys.</strong> The test keys are derived from public labels so the data is reproducible — anyone can recompute them. Real keys must be random and kept secret (ideally in a hardware security module).</li>
           <li><strong>No bit-depth or geographic-reference checks.</strong> TIFF files are checked as images, but GeoTIFF georeferencing and the “bit depth = 8” idea from the architecture diagram are not checked (the guide defines no reason code for them).</li>
           <li><strong>One writer at a time for the ledger.</strong> Ledger updates are crash-safe, but two programs recording images at the same moment are not coordinated.</li>
@@ -630,7 +631,7 @@ Reports: test_results\results.json, test_results\results.csv</pre></div>
 <footer>
   <div class="container">
     <p>TSYP14 Technical Challenge · Track 3 “Trust the Pixel” — Security Assessment module (version 1.0.0).</p>
-    <p>Based on the TSYP14 Security Assessment teammate guide. Technical details: <a href="../README.md">README.md</a>.</p>
+    <p>Based on the layer 1 specification (TSYP14 Security Assessment guide). Technical details: <a href="../README.md">README.md</a>.</p>
   </div>
 </footer>
 

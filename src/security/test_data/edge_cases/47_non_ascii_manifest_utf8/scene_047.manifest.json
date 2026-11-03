@@ -2,8 +2,8 @@
   "manifest_version": 1,
   "image_id": "scene_047",
   "file_name": "scene_047.png",
-  "sha256": "e7f489f78c6e5e281b7804f1816072f26a25ed8563d6a7953dfc37ac848cb789",
-  "size_bytes": 12284,
+  "sha256": "60f3a178569e0a085084e6405b34d857742e6cb3ae2c29bbe03ef07487660191",
+  "size_bytes": 12697,
   "metadata": {
     "timestamp": "2026-10-13T03:00:00Z",
     "sensor_id": "SAT-ALPHA-01",

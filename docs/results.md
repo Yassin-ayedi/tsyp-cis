@@ -68,15 +68,15 @@ Each laundering operation is applied to **all** 3,000 test images, authentic and
 
 ## 4. Provenance layer
 
-The 13 attack scenes and their answer keys come from our own layer 1 specification, written before the code (the challenge documents do not detail the common standard scenario).
+The 13 attack scenes and their answer keys come from our own layer 1 specification, written before the code (the challenge documents do not detail the common standard scenario). Every test picture is a real EuroSAT Sentinel-2 tile (41 tiles from all 10 classes, enlarged ×4 by pixel repetition), except the files that are deliberately not pictures: an empty file, a text file renamed `.png`, random bytes, a decompression-bomb header and a 7000×6000 bilevel PNG.
 
 | Test set | Result |
 |---|---|
-| 13 attack scenes, simulated images (`src/security/test_data/scenes/`) | 13 / 13 |
-| 35 edge cases for the checks no scene covers | 35 / 35 |
+| 13 attack scenes (`src/security/test_data/scenes/`) | 13 / 13 |
+| 35 edge cases for the checks no scene covers (`src/security/test_data/edge_cases/`) | 35 / 35 |
 | 5 invariants (never reads the answer key, never modifies the ledger, records only after PASSED, deterministic, refuses private keys) | 5 / 5 |
-| 13 attack scenes rebuilt on real EuroSAT tiles (`src/security/test_data_eurosat/`) | 13 / 13 (+ 5 / 5 invariants) |
-| 13 reference samples from a second, separate generator written with the specification (simulated images, demo keys) | 13 / 13 (+ 5 / 5 invariants) |
+| Independent script comparing all 7 tested fields of every case with its answer key | 48 / 48 |
+| 13 reference samples from a second, separate generator written with the specification (synthetic pictures, demo keys) | 13 / 13 (+ 5 / 5 invariants) |
 | `tools/mutation_check.py`: single-bug copies of the module | 17 / 17 caught |
 
 Every one of the 22 reason codes in the specification is exercised by at least one case.

@@ -24,7 +24,7 @@
     "policy_version": "2026.10-demo",
     "module_version": "1.0.1",
     "python": "3.13.5",
-    "run_at_utc": "2026-10-27T14:52:03Z",
+    "run_at_utc": "2026-11-03T16:13:09Z",
     "note": "Synthetic provenance/integrity tests only; they say nothing about detecting visual manipulation in real satellite imagery."
   },
   "results": [
@@ -113,7 +113,7 @@
         ]
       },
       "reasons": [
-        "HASH_MISMATCH: image SHA-256 d895bc2c96e1d18e35badccb6abd20ae728d3158910234e5fc1cee9cc0d88b82 != signed faba964955c9688f7b835686d3a9933e0da9c4dec1d16ae31f1703743db518b7"
+        "HASH_MISMATCH: image SHA-256 ef606cb384d69ff068de2cce328c6978568cbd0a12dde6e3953d88a0a1af89a7 != signed 10cbd9c6979807388c4e62715b67d97aeb9cd80805c40da2685e012ed1a7c007"
       ],
       "mismatches": [],
       "passed": true
@@ -628,7 +628,7 @@
         ]
       },
       "reasons": [
-        "FORMAT_SIZE: file size 10229 B outside [1, 1048] B"
+        "FORMAT_SIZE: file size 10776 B outside [1, 1048] B"
       ],
       "mismatches": [],
       "passed": true
